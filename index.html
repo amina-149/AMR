@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AMR میڈیکل اسسٹنٹ - اینٹی مائکروبیل مزاحمت</title>
+    <meta name="description" content="پاکستان کے کسانوں، مویشی پالوں اور ویٹرنری ڈاکٹروں کے لیے AMR میڈیکل اسسٹنٹ چیٹ بوٹ">
+    <meta name="keywords" content="AMR, اینٹی مائکروبیل مزاحمت, پاکستان, کسان, مویشی, ویٹرنری, میڈیکل اسسٹنٹ">
+    
+    <!-- Progressive Web App -->
+    <meta name="theme-color" content="#166534">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="AMR اسسٹنٹ">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="AMR میڈیکل اسسٹنٹ">
+    <meta property="og:description" content="پاکستان کے لیے AMR میڈیکل اسسٹنٹ چیٹ بوٹ">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="ur_PK">
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/svg+xml" href="/amr-logo.svg">
+    <link rel="apple-touch-icon" href="/amr-logo-192.png">
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'amr-green': '#166534',
+                        'amr-light-green': '#22c55e',
+                        'amr-sky': '#0ea5e9',
+                        'amr-white': '#ffffff'
+                    },
+                    fontFamily: {
+                        'urdu': ['Noto Nastaliq Urdu', 'serif']
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Database Configuration -->
+    <script>
+        window.AMR_CONFIG = {
+            SUPABASE_URL: 'https://your-supabase-project.supabase.co',
+            SUPABASE_ANON_KEY: 'your-anon-key',
+            GEMINI_API_KEY: 'your-gemini-api-key',
+            TWILIO_ACCOUNT_SID: 'your-twilio-account-sid',
+            TWILIO_AUTH_TOKEN: 'your-twilio-auth-token',
+            WHATSAPP_NUMBER: 'whatsapp:+14155238886',
+            ENVIRONMENT: 'production'
+        };
+        
+        // Database connection status monitoring
+        window.AMR_DB_STATUS = {
+            connected: false,
+            lastCheck: null,
+            checkInterval: 30000 // 30 seconds
+        };
+        
+        // Monitor database connection
+        function checkDatabaseConnection() {
+            if (window.AMR_CONFIG.SUPABASE_URL && window.AMR_CONFIG.SUPABASE_ANON_KEY) {
+                fetch(window.AMR_CONFIG.SUPABASE_URL + '/rest/v1/?apikey=' + window.AMR_CONFIG.SUPABASE_ANON_KEY)
+                    .then(response => {
+                        window.AMR_DB_STATUS.connected = response.ok;
+                        window.AMR_DB_STATUS.lastCheck = new Date().toISOString();
+                        updateDBStatusUI();
+                    })
+                    .catch(error => {
+                        window.AMR_DB_STATUS.connected = false;
+                        window.AMR_DB_STATUS.lastCheck = new Date().toISOString();
+                        updateDBStatusUI();
+                    });
+            }
+        }
+        
+        function updateDBStatusUI() {
+            const statusElement = document.getElementById('db-status');
+            if (statusElement) {
+                statusElement.textContent = window.AMR_DB_STATUS.connected ? 'ڈیٹا بیس جڑا ہوا ہے' : 'ڈیٹا بیس منقطع ہے';
+                statusElement.className = window.AMR_DB_STATUS.connected ? 'text-green-600' : 'text-red-600';
+            }
+        }
+        
+        // Check connection on load and periodically
+        window.addEventListener('load', () => {
+            checkDatabaseConnection();
+            setInterval(checkDatabaseConnection, window.AMR_DB_STATUS.checkInterval);
+        });
+    </script>
+</head>
+<body class="font-urdu bg-gradient-to-br from-green-50 to-sky-50">
+    <div id="root"></div>
+    
+    <!-- Database Status Indicator -->
+    <div id="db-status-container" class="fixed top-4 left-4 z-50 bg-white rounded-lg shadow-lg p-3 border">
+        <div class="flex items-center space-x-2">
+            <div class="w-2 h-2 rounded-full bg-gray-400 animate-pulse"></div>
+            <span id="db-status" class="text-sm font-medium">ڈیٹا بیس کی جانچ ہو رہی ہے...</span>
+        </div>
+    </div>
+    
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js')
+                .then(registration => console.log('SW registered'))
+                .catch(error => console.log('SW registration failed'));
+        }
+    </script>
+    
+    <!-- React App -->
+    <script type="module" src="/src/main.tsx"></script>
+</body>
+</html>
