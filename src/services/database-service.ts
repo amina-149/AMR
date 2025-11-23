@@ -119,7 +119,7 @@ export class DatabaseService {
     }
   }
   
-  async subscribeToReports(callback: (report: any) => void): Promise<void> {
+  async subscribeToReports(_callback: (report: any) => void): Promise<void> {
     if (!this.connectionStatus) return;
     
     try {

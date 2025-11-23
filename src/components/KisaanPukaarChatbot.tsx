@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Mic, MicOff, Phone, MessageCircle, User, Stethoscope, Cow, Wheat, AlertTriangle, CheckCircle, QrCode, Globe } from 'lucide-react';
+import { Send, Mic, MicOff, MessageCircle, User, Stethoscope, Wheat, AlertTriangle, CheckCircle, QrCode, Globe } from 'lucide-react';
 import { DatabaseService } from '../services/database-service';
+import { AirtableService } from '../services/airtable-service';
 
 interface Message {
   id: string;
@@ -34,6 +35,7 @@ const KisaanPukaarChatbot: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
   const databaseService = useRef<DatabaseService | null>(null);
+  const airtableService = useRef<AirtableService | null>(null);
 
   const languages = [
     { code: 'ur', name: 'اردو', flag: '🇵🇰' },
@@ -46,7 +48,7 @@ const KisaanPukaarChatbot: React.FC = () => {
 
   const userTypes = [
     { id: 'farmer', name: 'کسان', icon: Wheat },
-    { id: 'livestock', name: 'مویشی پال', icon: Cow },
+    { id: 'livestock', name: 'مویشی پال', icon: User },
     { id: 'vet', name: 'ویٹرنری ڈاکٹر', icon: Stethoscope },
     { id: 'general', name: 'عام صارف', icon: User }
   ];
@@ -55,17 +57,32 @@ const KisaanPukaarChatbot: React.FC = () => {
   useEffect(() => {
     const initDatabase = async () => {
       try {
-        databaseService.current = DatabaseService.getInstance();
-        const connected = await databaseService.current.connect();
-        setDbConnected(connected);
+        // Try Airtable first
+        airtableService.current = AirtableService.getInstance();
+        const airtableConnected = await airtableService.current.connect();
         
-        if (connected) {
-          // Load user profile and AMR reports
-          const profile = await databaseService.current.getUserProfile('current-user');
-          if (profile) {
-            setUserProfile(profile);
-            const reports = await databaseService.current.getUserAMRReports(profile.id);
-            setAmrReports(reports);
+        if (airtableConnected) {
+          setDbConnected(true);
+          console.log('Connected to Airtable database');
+          
+          // Load sample data from Airtable
+          const sampleReports = await airtableService.current.getRecords('amr_reports');
+          if (sampleReports.length > 0) {
+            setAmrReports(sampleReports.map((record: any) => record.fields));
+          }
+        } else {
+          // Fallback to mock database
+          databaseService.current = DatabaseService.getInstance();
+          const connected = await databaseService.current.connect();
+          setDbConnected(connected);
+          
+          if (connected) {
+            const profile = await databaseService.current.getUserProfile('current-user');
+            if (profile) {
+              setUserProfile(profile);
+              const reports = await databaseService.current.getUserAMRReports(profile.id);
+              setAmrReports(reports);
+            }
           }
         }
       } catch (error) {
@@ -260,9 +277,9 @@ const KisaanPukaarChatbot: React.FC = () => {
 
   // Generate QR code for WhatsApp registration
   const generateQRCode = () => {
-    const whatsappNumber = (window as any).AMR_CONFIG.WHATSAPP_NUMBER;
-    const message = encodeURIComponent('AMR میڈیکل اسسٹنٹ میں خوش آمدید');
-    const whatsappUrl = `https://wa.me/${whatsappNumber.replace('whatsapp:', '')}?text=${message}`;
+    // const whatsappNumber = (window as any).AMR_CONFIG.WHATSAPP_NUMBER;
+    // const message = encodeURIComponent('AMR میڈیکل اسسٹنٹ میں خوش آمدید');
+    // const whatsappUrl = `https://wa.me/${whatsappNumber.replace('whatsapp:', '')}?text=${message}`;
     setShowQR(true);
   };
 
